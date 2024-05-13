@@ -1,0 +1,749 @@
+\documentclass{mcmthesis}
+ %\documentclass[CTeX = true]{mcmthesis}  % 当使用 CTeX 套装时请注释上一行使用该行的设置
+\mcmsetup{tstyle=\color{black}\bfseries,%修改题号，队号的颜色和加粗显示，黑色可以修改为 black
+        tcn = 2410732, problem = C, %修改队号，参赛题号
+        sheet = true, titleinsheet = true, keywordsinsheet = true,
+        titlepage = false, abstract = true}
+
+  %四款字体可以选择
+  %\usepackage{times}
+  %\usepackage{newtxtext,newtxmath} %CTeX 无此字体，可用 txfonts 替代，请使用新版 TeXLive.
+  \usepackage{palatino}
+  %\usepackage{txfonts}
+\usepackage{enumerate}
+\usepackage{indentfirst}  %首行缩进，注释掉，首行就不再缩进。
+\usepackage{lipsum}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usepackage[titles]{tocloft}
+\usepackage{bm}
+\usepackage[nottoc]{tocbibind}
+\setlength{\cftbeforesecskip}{0.5pt}
+\setlength{\cftbeforesubsecskip}{0.2pt}
+\title{Analysis of Momentum in the Match Flow}
+
+	
+\begin{document}
+\begin{abstract}
+\par After exploring the data set of Wimbledon 2023 Gentlemen’s singles matches after second round, we cleaned the data and developed three different momentum-related models.The three models focus on different aspects, quantization, validation and prediction.They are mutually reinforcing.
+\begin{itemize}
+	\item Model 1 is a novel combination of \textbf{macro and micro} scale, namely collective and individual level. We named it as \textbf{M\&M model}. It is dedicated to quantifying momentum, providing a visualization of the match flow and setting the data groundwork for Model 2 and 3. 
+	
+	In M\&M model, macro and micro factors can act independently, but their combined effect is even better, achieving an accuracy of $0.9688$. More interestingly, the momentum quantified by the model is conserved.
+	\item Model 2 is a hybrid combination of Markov chain and Bradley-Terry model.We named it as \textbf{Markov-BT model}. It is designed to validate momentum quantified by M\&M model. In this way, it can be inferred that momentum is indispensable in a competition.
+	
+	In Markov-BT model, By fitting the results of coefficient, we observed a strong linear correlation . After conducting a \textbf{hypothesis test}, we get a $p$-value $< \;0.01$, providing evidence that proves the coach's idea wrong.
+	\item Model 3 is a \textbf{BP neural network model}. It focuses on identifying the most relevant factors and predicting momentum quantified by M\&M model . Then we provide some advice to players considering momentum swing accordingly.
+	
+	In BP neural network model, the mean squared error (\textbf{MSE}) is 0,0109.This implies a high level of prediction accuracy.
+\end{itemize}
+
+Afterwards, we tested the generalizability of the model, using data from the ATP Challenger Tour in 2022 and BWF World Tour women's singles events that we found. It turns out that the model performed well, but it was particularly effective in tennis events of a similar nature. Finally, \textbf{sensitivity analysis} was conducted on the M\&M model, and the results demonstrated that the model was highly sensitive to the weight bias in tennis events of a similar nature, but less sensitive in different types of events.
+\begin{keywords}
+M\&M model, Markov-BT model, hypothesis test, BP neural network model.
+\end{keywords}
+\end{abstract}
+\maketitle
+%% Generate the Table of Contents, if it's needed.
+\tableofcontents
+\newpage
+%%
+%% Generate the Memorandum, if it's needed.
+\memoto{Mr. Coach}
+ \memofrom{Team \# 2410732}
+ \memosubject{Advice for Coaches Regarding Momentum}
+\memodate{\today}
+% \memologo{\LARGE I'm pretending to be a LOGO!}
+ \begin{memo}[Memorandum]
+We develope three different models to evaluate and predict the momentum of players. We quantify momentum as a value related to specific factors such as serving advantage, point status, mental state, and physical condition at a given time. A higher momentum indicates better performance. We found that winning is not random but  largely influenced by momentum. The same applies to the flow of the match. Based on our model's consistent performance in tennis-type matches, we believe that our advice hold high reference value and credibility. Some constructive suggestions are as follows.
+
+1. We observed that serving advantage plays a important role in tennis matches. To some extent, it implies a significant negative impact on the returners. To compensate for this disadvantage, we recommend focusing on training your players' ability to receive as returners. This includes improving their ability to focus, reaction speed, movement speed, initial acceleration, and shot accuracy.
+
+2. We found that small score difference have a significant impact on a player's momentum and exhibit a positive feedback effect. To adapt to this pattern, we suggest you try to find techniques that help players quickly recover their psychological and physical states during rest periods. This can include using breathing regulation techniques, relaxation training, psychological preparation, and methods to enhance focus. 
+
+3. Apart from the factors mentioned above, we discovered that the following factors also influence momentum: double fault rate, unforced error rate, probability of successful net shots in a game, opponent's inability to return serve rate, and probability of successful break shots in a game. Therefore, we recommend the following:
+\begin{itemize}
+\item Emphasize training the players' serving skills to ensure accurate and powerful serves.
+\item Focus on developing the players' ability and technique to handle and play "close-call" shots, including shots that skim the edges of the court.
+
+\end{itemize}
+
+We hope that our suggestions do you some help. If you have any questions or any issues that need to be resolved, please feel free to contact us. We would be more than willing to assist you.
+
+ \end{memo}
+%%
+\section{Introduction and Problem Restatement}
+
+%\begin{itemize}
+%\item the angular velocity of the bat,
+%\item the velocity of the ball, and
+%\item the position of impact along the bat.
+%\end{itemize}
+%\lipsum[4]
+%\emph{center of percussion} [Brody 1986], \lipsum[5]
+%
+%\begin{Theorem} \label{thm:latex}
+%\LaTeX
+%\end{Theorem}
+%\begin{Lemma} \label{thm:tex}
+%\TeX .
+%\end{Lemma}
+%\begin{proof}
+%The proof of theorem.
+%\end{proof}
+
+%\subsection{Other Assumptions}
+%
+%\begin{itemize}
+%\item
+%\item
+%\item
+%\item
+%\end{itemize}
+In the 2023 Wimbledon Gentlemen’s final, 20-year-old Spanish rising star Carlos Alcaraz Defeated 36-year-old four time defending champion Novak Djokovic in five-set thriller to win his maiden title at The Championships. For Djokovic, it is also his first loss at the Wimbledon Championships since 2013, marking the end of an extraordinary performance by one of the greatest Grand Slam players in history.
+
+Tennis is a sport where the scoring system is different for games, sets and matches. A game is played until a player scores four points, which a player can earn in several different ways. A set is a collection of games, played until a player wins six games or more. A match is played to a best of three or five sets. Usually, championship matches are played to five sets in men's singles. In simple terms, the aim of tennis is to win enough points to win a game, enough games to win a set, and enough sets to win a match. 
+
+In sports, a team or player may feel they have the momentum, or motivation during a match. Tennis is no exception to this principle. Researchers have defined momentum as the psychological power that can influence an athlete's mental and physical efforts, thereby helping us breed success through success and transforming a match from terrible to spectacular\cite{1}. Therefore, the rational definition and quantification of momentum using match data, as well as predicting the fluctuations of momentum during a match, have significant practical value and real-world guidance in sports.
+To solve this problem, we need to:
+\begin{itemize}
+	\item Develop a model that reflects the advantage of serving, quantify players' performance at a given time during a match, and provide a visualization to depict the match flow.
+	\item Develop a model that can assess the significance of momentum on outcomes in tennis matches.
+	\item Develop a model to predict match swings, identify the most related factors, and provide advice for players.
+	\item Test the model on one or more of the other matches, and identify factors that may make models more generalizable and accurate.
+	\item Summarize the findings with advice for coaches regarding momentum.
+\end{itemize}
+
+\section{Assumptions and Notations}
+\subsection{Assumptions}
+
+To simplify our model and eliminate the complexity, we make the following basic assumptions in this literature. These assumptions serve as key premises that guide the model's structure.
+
+\noindent\textbf{Assumption 1.} During the Wimbledon men's matches, it is assumed that players will not experience severe health issues, such as fractures, which could significantly and immediately impact their ability to compete and influence the match outcome.
+	
+\noindent\textbf{Assumption 2.} Assuming the elements in the probability matrix follow statistical rules.
+
+\subsection{Notations}
+In this work, we use the nomenclature in Table 1 in the model construction. Other none-
+frequent-used symbols will be introduced once they are used.
+%表格的模板
+\begin{table}[htb]
+	\centering
+	\caption{Notations Used in This Literature}
+	\label{tab:notations}
+	\begin{tabular}{ccc}
+		\specialrule{2pt}{0pt}{1pt}
+		\textbf{Symbol} & \textbf{Definition} & \textbf{Type} \\
+		\hline
+		$\mathbb{S}$ & score situation & Set \\
+		$r$ & accuracy & Scalar\\
+		$\mathbf{P}$ & probability matrix & Matrix\\
+		$\mathbf{\Lambda}$ & time decay factor matrix & Matrix\\
+		$\mathbf{Q}$ & transition matrix & Matrix\\
+		$\mathbf{M}$ & momentum matrix & Matrix\\
+ 		\hline
+	\end{tabular}
+\end{table}
+
+\section{M\&M Model}
+Macro and micro are the results of observing and analyzing the same thing at different scales. Due to differences in form and developmental patterns, things can have different micro-level and macro-level entities. This leads to significant differences in the ways different things distinguish between the micro and macro perspectives.
+
+Therefore, we propose a mixed-method model that involves a comprehensive analysis from both macro and micro dimensions, combining factors at both collective level and individual level. For the overall factors, we combine weight matrix $\mathbf{W}$ and time decay factor matrix $\mathbf{\Lambda}$; for individual factors, we use random forest to select the leading score of the current game as the final factor. The model coefficients are all determined based on accurcy $r$. 
+
+Meanwhile, we define momentum matrix $\mathbf{M}$ as the result of applying the sigmoid function to the linear combination $\mathbf{Q}$ of the two factors through logistic regression. This mapping transforms $\mathbf{Q}$ into the space $(0, 1)$, representing the range of possible values for momentum. The higher the momentum, the better the performance. Finally, we visualize the performance of players within a given time and surprisely, we discover that the law of conservation of ``momentum'' still holds in tennis matches.
+
+Using the thrilling Wimbledon men's final as an example, the macro model achieved an accuracy of $0.6012$, the micro model achieved an accuracy of $0.9315$, and the combined model achieved a prediction accuracy of $0.9688$. This indicates that our combined model recognizes the importance of both overall and individual factors. It not only compensates for the shortcomings of the macro model but also achieves a synergistic effect where ``One plus one is greater than two''.
+
+\subsection{Macro Model}
+The final form of the macro model is represented by 
+\[
+ \mathbf{W} = \mathbf{P}^\mathbb{S}\odot \mathbf{\Lambda}\eqno(1)
+\]
+\subsubsection{Probability Matrix}
+Considering only the score situations of all rallies in dataset, we can calculate the win and loss rates for the servers and returners based on statistical patterns, independent of individual factors. We establish that $\mathbf{P}_1$ represent the win rate, $\mathbf{P}_2$ represent the loss rate, $\mathbb{S}_{i1}$ represent the situation where servers $\mathbb{S}_i$ wins, $\mathbb{S}_{i2}$ represent the situation where returners ${\mathbb{S}_i}$ loses, The calculation formula can be expressed as:
+\[
+ \mathbf{P}_j\left(\mathbb{S}_{(i,j)}\right) = \frac{\sum \mathbb{S}_{(i,j)}}{\sum \mathbb{S}_{i}}\eqno(2)
+\]
+
+As for sum,we prioritize calculating the total number of events corresponding to consecutive wins or consecutive losses in a straightforward manner,starting from the initial (0:0) state of the game until its termination. Then, we combine this with specific indicators from dataset, such as game victor, to indirectly determine the category of the situation and obtain the total number of events for complex situations. Finally, we use formula (2) to calculate $\mathbf{P}$.
+
+Additionally, through simple analysis prior to the calculation, we have found that for a given score situation:
+	\begin{itemize}
+		\item The sum of win and loss rates should be equal to $1$.
+		\item The win rate for the server is equivalent to the loss rate for the returner.
+		\item There are only two possible next score states: win or loss.
+	\end{itemize}
+Based on these observations, we further simplified the algorithm and verified its accuracy.
+\subsubsection{Understanding Probability Matrix in Situation $\mathbb{S}$}
+$\mathbf{P}^\mathbb{S}$ is the probability matrix in situation $\mathbb{S}$ and $\mathbf{P}^\mathbb{S}_{(i,j)}$ describes the win rate of player $j$ in the $i$-th rally. We determine whether player $j$ is the server or returner at the $i$-th rally based on the server, and then allocate the probabilities in $\mathbf{P}$ to obtain $\mathbf{P}^\mathbb{S}$. 
+
+We present the results and corresponding score situations through Figure 1. In Figure 1, each widget consists of three diamonds, arranged from the top right to the bottom right as: server win rate, score situation, and server loss rate. The darker the color, the higher the probability. In this diagram, each component has a darker color on the top and a lighter color on the bottom, with the values stabilizing around $\frac{2}{3}$ on the top and $\frac{1}{3}$ on the bottom. This visually reflects a consistent serving advantage.
+
+\begin{figure}[H]
+\small
+\centering
+\includegraphics[width=12cm]{D:/数学建模资料/临时文件夹/图片/yutu4.png}
+\caption{Flow of the Game} \label{fig:aa}
+\end{figure}
+
+Additionally, we have also noticed that win rates above $0.7$ consistently occur when the server experiences consecutive losses. This confirms that when the server is in a disadvantaged position, their potential is more likely to be stimulated and impact the momentum, leading to fluctuations in the score.
+
+\subsubsection{Understanding Time Decay Factor Matrix and Weight Matrix}
+$\mathbf{\Lambda}$ is the time decay factor matrix and $\mathbf{\Lambda}_{(i,j)}$ describes the decay condition of player $j$'s state caused by time in the $i$-th rally. We aim to find a decay coefficient α that reflects the macroscopic pattern so the calculation formula can be expressed as:
+\[
+  \mathbf{\Lambda}_{i1} = \mathbf{\Lambda}_{i2} = \mathrm{e}^{-\alpha t_i}\eqno(3)
+\]
+\par $\mathbf{W}$ is the weight matrix and $\mathbf{W}_{(i,j)}$ describes the win rate weight for the $i$-th rally under the joint influence of $\mathbf{P}^\mathbb{S}_{(i,j)}$ and $\mathbf{\Lambda}_{(i,j)}$.The calculation formula can be expressed as Equation 1.
+\subsection{Micro Model}
+\subsubsection{Random Forest}
+To evaluate the impact of multiple factors on the binary variable ``point\_victor'' which means the victor of a rally, we employed the random forest algorithm. The most relevant factors and their importance were identified as follows:
+\begin{table}[htb]
+	\centering
+	\caption{Random Forest result}
+	\begin{tabular}{lccc}
+		\specialrule{2pt}{0pt}{1pt}
+		\textbf{Variable} & total\_lead\_point & game\_victor & server \\
+		\textbf{Weight}& 0.9119 & 0.7132 & 0.6288\\
+		\specialrule{2pt}{0pt}{1pt}
+	\end{tabular}
+\end{table}
+The total lead point can be supported by the ``success breeds success'' theory, which states when an individual has a string of successes, they are likely to experience continued success.
+
+Based on this, we used both random forest and Bayesian models to predict ``point\_victor''. However, the accuracy was found to be low, and the performance of the models was unsatisfactory.
+
+\subsubsection{Understanding Advantage Matrix}
+$\mathbf{A}$ is the advantage matrix and $\mathbf{A}_{(i,j)}$ is player $j$'s leading point in the $i$-th rally. We define player $j$'s point in the $i$-th rally as $\mathbf{A}_{(j,i)}$, so
+\[
+ \mathbf{A}_{(i,j)} = \mathbf{A}_{i}^{j} - \mathbf{A}_{i}^{3-j}\eqno(4)
+\]
+\subsubsection{Improvement}
+According to section 3.2.1, we used the total leading points for modeling, but its accuracy was only around $0.5$, and the predicted values showed little fluctuation. 
+
+Taking the Wimbledon final as an example, the predicted values remained constant over a long period of time, which is clearly unreasonable. We found that although the two players were closely matched in terms of score, player $\mathcal{A}$ had a lead of around 10 points over player $\mathcal{B}$ for a significant period of time in terms of total points. This excessive influence of the score advantage resulted in a singular bias in the predictions. 
+
+Therefore, we switched to modeling based on the leading points in every single game, narrowing down the scope of the score advantage to within the game. After debugging, the model performed well, achieving an accuracy of $0.9315$ even without combining it with the macro model.
+
+\subsection{Our M\&M Model}
+The final form of the linear combination model is represented by $\mathbf{M}$. $\mathbf{M}$ is obtained by transforming $\mathbf{Q}$ through logistic regression, as summarized in Equation 5. $\mathbf{Q}$ is obtained by linearly combining $\mathbf{W}$ and $\mathbf{A}$.We use $b$ to represent coefficients, as given:
+\[
+ \mathbf{M}_{(i,j)} = \frac{1}{1+\mathrm{e}^{-\mathbf{Q}_{(i,j)}}}\eqno(5)
+\]
+\[
+ \mathbf{Q}=\mathbf{W}+b\mathbf{A}\eqno(6)
+\]
+\subsubsection{Understanding Transition Matrix and Momentum Matrix}
+$\mathbf{Q}$ is the transition matrix that successfully integrates the overall factors with individual factors by utilizing Equation 6. However, since the value of $b$ only focuses on accuracy and not on the numerical range, directly defining it as momentum would lack comparability. Therefore, we use logistic regression to transform $\mathbf{Q}$, ensuring that it falls within a certain measurement range.
+
+$\mathbf{M}$ is the momentum matrix transformed by Equation 5 and $\mathbf{M}_{(i,j)}$ describes player $j$'s momentum in the $i$-th rally. We assume that the higher the momentum of a player, the better their performance.
+\subsubsection{Smoothing Process}
+Due to the significant influence of individual factors on momentum in this model, it tends to fluctuate greatly over time, making it difficult to observe the overall trend. Therefore, we use the moving average method to smooth the momentum, reducing noise and fluctuations in smoothness.
+
+Figure 1 illustrates the change in momentum of the two players over time in the Wimbledon final. We can see that the momentum of the two players is symmetrically distributed, with multiple peaks in a single match.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=11cm]{D:/数学建模资料/临时文件夹/图片/smo.png}
+	\caption{Smoothing Process} \label{fig:aa}
+\end{figure}
+
+\subsubsection{Conservation of Momentum}
+Regarding the symmetric distribution, we introduce the concept of ``conservation of momentum'' from physics.
+
+The conservation of momentum is a fundamental principle in physics that describes the conservation property of the total momentum in a closed system. In this model, we can also consider the two players in a match as a closed system and speculate that their momentum is conserved. We denote the total momentum matrix as $\mathbf{T}^M$.
+
+From Figure 2, we have observed that the momentum of the two players is symmetrically distributed. Further calculations reveal that the values of $\mathbf{T}^M_i$ are not exactly consistent but exhibit minimal fluctuations, indicating approximate conservation. This can also be explained by Equations 4, 5, and 7, $\mathbf{Q}_{i1} + \mathbf{Q}_{i2}$ ultimately becomes a constant value, denoted as $\mathbf{\Lambda}_i=1$. Additionally, due to the strong correlation between these two columns of variables, the logistic regression model provides a good fit in this scenario, resulting in the approximately constant $\mathbf{T}^M$ after logistic regression.
+\subsection{Determination of Model Coefficients}
+The model coefficients include the decay coefficient α and the linear coefficient $b$. We assume that they vary with equal step sizes within a certain range. We calculate the corresponding $\hat{y} $ and $r$ values and select the values that generally yield higher $r$ values as the final coefficients.
+
+$\hat{y}$ is the predicted value matrix and $\hat{y}_i$ is the predicted value of $i$-th rally which calculated by:
+
+\begin{align*}
+	\hat{y}_i = \begin{cases}
+		\begin{aligned}
+			&0 \quad \text{if } \mathbf{M}_{i1} > \mathbf{M}_{i2} \\
+			&1 \quad \;\;\;\;\;\;\text{else}
+		\end{aligned}
+	\end{cases}\tag{$7$}
+\end{align*}
+
+We denote the actual total number of ``point\_victor'' as sum, and the total number of predictions that match the actual values as the sum of $r$. The calculation formula for $r$ is summarized in Equation 9.
+%\begin{figure}[h]
+%\small
+%\centering
+%\includegraphics[width=8cm]{example-image-a}
+%\caption{The name of figure} \label{fig:aa}
+%\end{figure}
+
+%\eqref{aa}
+%\begin{equation}
+%a^2 \label{aa}
+%\end{equation}
+
+%\[
+%  \begin{pmatrix}{*{20}c}
+%  {a_{11} } & {a_{12} } & {a_{13} }  \\
+%  {a_{21} } & {a_{22} } & {a_{23} }  \\
+%  {a_{31} } & {a_{32} } & {a_{33} }  \\
+%  \end{pmatrix}
+%  = \frac{{Opposite}}{{Hypotenuse}}\cos ^{ - 1} \theta \arcsin \theta
+%\]
+
+
+%\[
+%  p_{j}=\begin{cases} 0,&\text{if $j$ is odd}\\
+%  r!\,(-1)^{j/2},&\text{if $j$ is even}
+%  \end{cases}
+%\]
+
+
+
+%%\[
+%  \arcsin \theta  =
+%  \mathop{{\int\!\!\!\!\!\int\!\!\!\!\!\int}} \limits_\varphi
+%  {\mathop {\lim }\limits_{x \to \infty } \frac{{n!}}{{r!\left( {n - r}
+%  \right)!}}} \eqno (1)
+%\]
+
+
+
+
+\section{Markov-BT Model to Prove Momentum's Effect}
+In this section,we know that a coach hold the perspect that swing in play and runs of success by one player are random, which means the "momentum" doesn't play a role in the game. Hence, in his viewpoint, we can make a basic assumption: 
+  
+\noindent\textbf{Assumption:} Each point scored is independent and identically distributed. i.e. we treat points as independent indentically distributed (i.i.d) random variables.  
+
+It's necessary to note that this assumption is made under the coach's viewpoint, and the following deduction is based on this i.i.d.hypothesis. Concentrateing on one player, we start from a linear probability model to connect the winning probability under the i.i.d hypothesis and the momentum-effected winning probability. The rest of this section is arranged as follows.   
+
+In section 4.1, we start from a linear probability model. In section 4.2, we proposed the Markov-BT model, a hybrid novel model to figure out the capability of the player winning the game while serving. In section 4.3, We test the normality of the data, calculated the Pearson correlation coefficient, and conducted a hypothesis test to demonstrate the significance of the correlation coefficient. Finally we prove the coach's viewpoint is incorrect.
+\subsection{Linear Probability Model}
+There are two Players $\mathcal{A}$ and $\mathcal{B}$ in a tennis game. in this section, we use Player $\mathcal{A}$ to denote the player who is on serve. We start from a linear probability model
+\[
+ Y_a = C_a + \beta D_a + \delta_a \eqno(8)
+\] 
+which comprises four components: probability of winning this game (taking momentum into consideration) $Y_a$, capability under i.i.d hypothesis $C_a$, momentum influence (dynamic) $D_a$, regressor $\beta$ , and some random factors $ \delta_a $, because of the random factors are unpredictable, we assume that $\delta_a$ has expectation 0 so that it does't influence the probability from the whole perspective. In this four components, $Y_a$ and $D_a$ are got from M\&M model, in the next part we will figure out the $C_a$.
+\subsection{Markov-BT Model}
+In this literature, we construct a novel model to predict the winning probability based on the i.i.d. hypothesis. We combine Markov chain and Bradley-Terry model together to produce a hybrid model, namely the Markov-BT model. This Markov-BT model is composed of two blocks: the Markov chain and Bradley-Terry model. First we use Markov chain to figure out the original probability that Player $\mathcal{A}$ wins, then we consider this original probability as the strength that Player $\mathcal{A}$ have when playing against Player $\mathcal{B}$ and input it into the classic Bradley-Terry model. Finally, the two blocks of Markov-BT model outputs the value of $C_a$, which is exactly what we need.
+\subsubsection{Markov Chain}
+According to the assumption we made under the coach's idea, the probability of the serving player winning each game is independently and identically distributed, which means that regardless of the previous score, the serving player has a probability of $p_a^r$ of winning each rally, while the receiving player has a probability of $1-p_a^r$ of winning.We can construct the state transition matrix $T$ as follows.
+\[
+T = \begin{bmatrix}
+	p_a^r & 1-p_a^r \\
+	1-p_a^r & p_a^r
+\end{bmatrix}\eqno(9)
+\]
+Next, we analyze the score situations in which Player $\mathcal{A}$ may win against Player $\mathcal{B}$ when Player $\mathcal{A}$ serves. Let $P_a^{game} (i,j)$ represent the probability Player $\mathcal{A}$ wins when Player $\mathcal{A}$ has won $i$ points and Player $\mathcal{B}$ has won $j$ points. Let $\mathbb{W}$ denote the set of all possible score situations when Player $\mathcal{A}$ wins (based on the number of balls).
+\[
+ \mathbb{W} = \{ (4,0), (4,1), (4,2), (n+5,n+3)\;with\:n>0 \}\eqno(10)
+\]
+Add up all possible winning score probabilities easily, it's easy to get the result:
+\[
+ P_a^{game} = \sum_{j=0}^{2}P_a^{game}(4,j)\,+\,P_a^{game}(3,3)\sum_{n=0}^{\infty}P_a^{deuce}(n+2,n)\eqno(11)
+\]
+$P_a^{deuce}(n+2,n)$ represent the probability of Player $\mathcal{A}$ winning the match by two goals after the game reaches a deuce.
+\[
+ P_a^{deuce}(n+2,n) = \sum_{j=0}^{n}\left(p_a^r \left(1-p_a^r\right)\right)^j\left(p_a^r \left(1-p_a^r\right)\right)^{n-j}\binom{n}{j}\left(p_a^r\right)^2\eqno(12)
+\]
+So we can figure out the probability of the serving side winning a point:
+\[
+ P_a^{game} = (p_a^r)^4+4(p_a^r)^4(1-p_a^r)+10(p_a^r)^4(1-p_a^r)^2+20\frac{(p_a^r)^5(1-p_a^r)^3}{1-2p_a^r+2(p_a^r)^2}\eqno(13)
+\]
+input $p_a^r = 0.655$, the result is that $P_a^{game} = 0.853$.
+\begin{figure}[H]
+\small
+\centering
+\includegraphics[width=11cm]{D:/数学建模资料/临时文件夹/图片/markov.png}
+\caption{Markov Chain Function Graph} \label{fig:aa}
+\end{figure}
+\subsubsection{Bradley-Terry Model}
+The Bradley-Terry model is a probability model for the outcome of pairwise comparisons between individuals, we propose the $\lambda_i\in\mathbb{R}$ to represent the "capability" of one player, and let the outcome of a game between Player $\mathcal{A}$ and $\mathcal{B}$ be determined by $\lambda_i-\lambda_j$, According to the Bradley-Terry model, the log-odds corresponding to the capability $C_a$ that Player $\mathcal{A}$ beats $\mathcal{B}$ is modeled as:
+\[
+ log\frac{C_{a}}{1-C_a} = \lambda_i-\lambda_j\eqno(14)
+\]
+Through this model, the measured difference in capability is mapped to the probability space, solving for $C_a$ yields:
+\[
+ C_a = \frac{e^{\lambda_i-\lambda_j}}{1+e^{\lambda_i-\lambda_j}}\eqno(15)
+\]
+In this literature, We use the previously obtained $P_a^{game}$
+to represent the difference in capability and substitute it into Equation 15, visualizing this function in Figure 4.
+
+Using the Markov-BT model, we obtained a probability of $0.701$ for Player $\mathcal{A}$ winning in the end. This probability is calculated under the assumption that  the probability of the serving player winning each game is independently and identically distributed. Up to this point, we have determined the value of $C_a$.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=11cm]{D:/数学建模资料/临时文件夹/图片/bt.png}
+	\caption{Bradley-Terry Function Graph} \label{fig:aa}
+\end{figure}
+
+\subsection{Analyze Correlation Coefficients and Conduct Hypothesis Testing}
+To assess whether the probability of winning a tennis match is related to the momentum during the game, we selected the 2023 Wimbledon men's final as our analysis subject. We extracted the data with match\_id ``1701'' from the dataset and used the M\&M model to obtain
+$Y_a$ and $D_a$.
+
+In the previous section, we obtained the values of $C_a$. Now that we have the known values of 
+$Y_a$, $D_a$ and $C_a$ in the linear probability model, our objective is to examine the effect of 
+$D_a$ on $Y_a$. Firstly, to roughly confirm whether the two variables exhibit a linear relationship, we create a scatter plot of $Y_a$ and $D_a$ obtained through using M\&M model when processing the 2023 Wimbledon men's final data.
+
+From Figure 5, we can observe that there is a rough linear relationship between the two variables. Next, we will calculate the correlation coefficient between them. Since later sections involve verifying the significance of the correlation coefficient using a t-distribution, it requires the data to pass a normality test. Therefore, we perform a Shapiro-Wilk test on the data.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=10cm]{D:/数学建模资料/临时文件夹/图片/YD_scatter_graph.png}
+	\caption{Scatter Plot of $Y_a$ and $D_a$} \label{fig:aa}
+\end{figure}
+\subsubsection{Shapiro-Wilk Test}
+We employ the Shapiro-Wilk test to assess whether the $Y_a$ and $D_a$ data passes the normality test. The Shapiro-Wilk test is often used to determine if data is drawn from a normal distribution. That is, $X\sim N(\mu , \sigma^2)$. Hence, we hope to test the following hypothesis:
+\[
+ H_0:The\;data\;is\;drawn\;from\;normal\;population.
+\]
+\[
+ H_1:The\;data\;is\;not\;drawn\;from\;normal\;population.
+\]
+
+Shapiro-Wilk test is given by:
+\[
+ W = \frac{\left(\sum_{i=1}^{n}a_i x_{\left(i\right)}\right)^2}{\sum_{i=1}^{n}\left(x_i-\overline{x}\right)^2}\eqno(16)
+\]
+$x_{(i)}$ are dataset values and $a_i$ are constants generated by:
+\[
+ (a_1,a_2,\;\ldots\;,a_n) = \frac{m^T V^{-1}}{\left(m^T V^{-1}m\right)^{1/2}}\eqno(17)
+\]
+with $m=\left(m_1,m_2,\;\ldots\;,m_n\right)^T$ being the expected values of standard normal, $V$ is the covariance matrix of the statistics.
+\begin{table}[htb]
+	\centering
+	\caption{Shapiro-Wilk Test Result}
+	\begin{tabular}{cccc}
+		\specialrule{2pt}{0pt}{1pt}
+	    \textbf{variable}& \textbf{statistic}   & \textbf{degrees of freedom} & \textbf{$p$-value}   \\
+	    \hline
+	    
+		$D_a$ & 0.969             & 22                 & 0.677     \\
+		$Y_a$ & 0.972             & 22                 & 0.746      \\
+		\hline
+	\end{tabular}
+\end{table}
+
+The p-values for $D_a$ and $Y_a$ are both greater than 0.05, indicating that at a 95\% confidence level, we cannot reject the null hypothesis $H_0$. So the data passed Shapiro-Wilk test. Therefore, we can consider the data for both $D_a$ and $Y_a$ to approximately follow a normal distribution.
+Having visualized the data for $D_a$ and $Y_a$, it is evident from the graph that they roughly conform to a normal distribution.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=13cm]{D:/数学建模资料/临时文件夹/图片/normal.png}
+	\caption{Visualization of $Y_a$ and $D_a$} \label{fig:aa}
+\end{figure}
+\subsubsection{Pearson Correlation Coefficient}
+After the data passed the normality test, as indicated by the scatter plot earlier, it was observed that $Y_a$ and $D_a$ approximately exhibit a linear relationship. We introduced the Pearson correlation coefficient to quantify this correlation.
+
+The equation for Pearson correlation coefficient $\rho_{D_aY_a}$ is as follows:
+\[
+ \rho_{D_aY_a} = \frac{\sum{(D_{ai} - \bar{D_a})(Y_{ai} - \bar{Y_a})}}{\sqrt{\sum{(D_{ai} - \bar{D_a})^2} \sum{(Y_{ai} - \bar{Y_a})^2}}}\eqno(18)
+\]
+The calculated correlation coefficient $\rho_{D_aY_a}$ is 0.9984 and the visualization are shown below:
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=12cm]{D:/数学建模资料/临时文件夹/图片/corr.png}
+	\caption{Visualization of correlation coefficient} \label{fig:aa}
+\end{figure}
+
+\subsubsection{Using t-Test as Hypothesis Test for Significance}
+Now, we can see that our correlation $\rho_{D_aY_a}$, 0.9984, is very high as it is very close to +1, the maximum possible value for Pearson correlation coefficient. But we still need to calculate the $p$-value in order to determine whether this correlation is statistically significant or not. Hence, we hope to test the following hypothesis:
+\begin{align*}
+	H_0 &: \rho_{D_aY_a} = 0 \\
+	H_1 &: \rho_{D_aY_a} \neq 0
+\end{align*}
+
+%\[
+%H_0:The\;correlation\;is\;drawn\;from\;normal\;population.
+%\]
+%\[
+%H_1:The\;data\;is\;not\;drawn\;from\;normal\;population.
+%\]
+To determine this, we will first calculate a $t$ ratio using the following
+equation:
+\[
+t = \frac{r \sqrt{n-2}}{\sqrt{1 - r^2}}\eqno(19)
+\]
+
+Former research has proved that $t$ follows a t-distribution with degrees of freedom $(n-2)$ \cite{2}. Hence we calculate the $p$-value in this t-Test, the result is as follows.
+\begin{table}[htb]
+	\centering
+	\caption{t-Test Result}
+	\begin{tabular}{cccc}
+		\specialrule{2pt}{0pt}{1pt}
+		& \textbf{value}   & \textbf{degrees of freedom} & \textbf{$p$-value}   \\
+		\hline
+		
+		$\rho_{D_aY_a}$ & $0.9984^{***}$             & 20                 & $<0.01$     \\
+		\hline
+		& & \multicolumn{2}{r}{$p^{***} < 0.01$\hfill}\\
+	\end{tabular}
+\end{table}
+
+A $p$-value less than 0.01 suggests that, with a confidence level of 99\%, we can reject the null hypothesis $H_0$. Hence, we can come to the conclusion that the significance is very high. So, we can conclude that there is a strong correlation between the momentum of tennis players during a match and the score. This also proves that the coach's viewpoint is incorrect.
+\section{Prediction of Momentum Swings Based on BP Neural Network} 
+Through the problem statement, we understand that momentum is an abstract concept closely related to a player's performance on the court. It cannot be calculated directly using specific variables or formulas. Therefore, we need to select relevant features that align with the research direction and combine them with the corresponding states of momentum to predict and quantify it. This prediction should be presented in a visual format to demonstrate the trend of momentum changes. Firstly, this is undoubtedly a multi-feature problem, so we initially adopt a machine learning approach, where the BP neural network may be a good choice.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=5cm]{D:/数学建模资料/临时文件夹/图片/neurall.png}
+	\caption{Structure of BP Neural Network} \label{fig:aa}
+\end{figure}
+
+The most important thing at present is to identify the features that may have an impact on momentum. We will discuss them from four major aspects: scoring features, serving features, technical features, and opponent features. As shown in Figure 9 below:
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=18cm]{D:/数学建模资料/临时文件夹/图片/fea.png}
+	\caption{Feature Extraction and Description} \label{fig:aa}
+\end{figure}
+\subsection{Predicting Momentum Changes}
+The training dataset in the BP neural network is derived  from the match with match\_id ``2023-wimbledon-1301'', with player $\mathcal{A}$ being Carlos Alcaraz and player $\mathcal{B}$ being Nicolas Jarry, along with their respective feature data. The test dataset is the final match of this competition. As described in Figure 9, we have a highly accurate description template for momentum. Therefore, we can compare the prediction results with the description results from the first question to assess the accuracy of the model in predicting momentum changes.
+
+%\begin{itemize}
+%	
+%\item \textbf{}\\
+%
+%\item \textbf{}\\
+%
+%\end{itemize}
+
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}{0.5\textwidth}
+		\centering
+		\includegraphics[width=8cm]{D:/数学建模资料/临时文件夹/图片/图8.jpg}
+		\captionsetup{font=small,margin=10pt}
+		\caption{Momentum Change Trend} \label{fig:left}
+	\end{minipage}%
+	\begin{minipage}{0.5\textwidth}
+		\centering
+		\includegraphics[width=6cm,angle=90]{D:/数学建模资料/临时文件夹/图片/mse.jpg}
+		\captionsetup{font=small,margin=10pt}
+		\caption{Mean Squared Error} \label{fig:right}
+	\end{minipage}
+\end{figure}
+
+From figure 10, it can be observed that the BP neural network's predicted values have a good fit with the actual values in terms of the trend of momentum changes. This demonstrates the effectiveness of the BP neural network as a reliable model. Figure 11, which shows the mean squared error, further supports the notion that the BP neural network is a good model.
+
+We visualized the weights of each feature to the hidden layer in the BP neural network. The visualization is shown in Figure 12.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=12cm]{D:/数学建模资料/临时文件夹/图片/he2.jpg}
+	\caption{Heatmap of the weights for features in the BP neural network} \label{fig:aa}
+\end{figure}
+We assume this matrix as $\mathbf{W}$, where the elements within the matrix are denoted as $\mathbf{W}_{(i,j)}$, where $i$ represents the hidden layer number and $j$ represents the index number. $\mathbf{W}_f(j)$ represents the total weight of the $j$-th feature.
+\[ \mathbf{W}_f(j) = \frac{\sum_{i=1}^{n}\mathbf{W}_{(i, j)} - \min(\sum_{i=1}^{n} \mathbf{W}_{(i, j)})}{\max(\sum_{i=1}^{n}\mathbf{W}_{(i, j)}) - \min(\sum_{i=1}^{n} \mathbf{W}_{(i, j)})}\eqno(20) \]
+
+Based on this, it can be concluded that the Double fault rate is the indicator that best reflects the trend of momentum changes. We visualize the total weight ratings of the indicators.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=8.5cm]{D:/数学建模资料/临时文件夹/图片/22.png}
+	\caption{Total weight ratings} \label{fig:aa}
+\end{figure}
+From the visualization results, we can identify the features with the highest total weights. 
+\begin{table}[htb]
+	\centering
+	\caption{Top5 feature and total weight}
+	\begin{tabular}{lccccc}
+		\specialrule{2pt}{0pt}{1pt}
+		\textbf{Feature} & ace\_rate & unf\_err\_rate & double\_fault\_rate&net\_rate & break\_rate\\
+		\textbf{Total weight}& 0.900 & 0.982 & 1.00 &0.9868 &0.904\\
+		\specialrule{2pt}{0pt}{1pt}
+	\end{tabular}
+\end{table}
+\subsection{Predict the Turning Point of the Advantageous Position}
+We are now able to predict the momentum changes in a player's match. To determine when the flow of play is about to change from favoring one player to the other, we can make predictions on the momentum of the two players in the final match, subtract them, and identify the point where the resulting curve crosses the x-axis as the turning point.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=17cm]{D:/数学建模资料/临时文件夹/图片/图9.jpg}
+	\caption{Momentum Swings} \label{fig:aa}
+\end{figure}
+Next, we present the momentum difference curve of the two players in the final obtained by the M\&M model as a reference.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=12cm]{D:/数学建模资料/临时文件夹/图片/refer.png}
+	\caption{Momentum Swings by M\&M Result} \label{fig:aa}
+\end{figure}
+From the comparison of Figures 14 and 15, the trends are consistent. Additionally, as described in the question, following the order of sets, player $\mathcal{B}$ has the advantage, then there is a balanced situation (player $\mathcal{A}$ wins), followed by player $\mathcal{A}$ having the advantage, player $\mathcal{B}$ having the advantage, and finally a balanced situation (player $\mathcal{A}$ wins).
+\subsection{Advice for Players}
+The classification of momentum states is derived from Allistair Higham's \textit{Momentum, the Hidden Force in Tennis} \cite{3}.
+
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=15cm]{D:/数学建模资料/临时文件夹/图片/mom.png}
+	\caption{Momentum Classification and Recommendations} \label{fig:aa}
+\end{figure}
+We primarily focus on two aspects: momentum classification and the most relevant factors mentioned above.
+Regarding momentum classification, players should be aware of their own state during the match and adjust themselves based on the measures outlined in Figure 16 to develop positive momentum.
+
+As for the most relevant factors, for example, both the double fault rate and the serving strength of the players have a significant impact, with the double fault rate having the greatest effect. This indicates that players should prioritize practicing their serves and value their serving opportunities in the match. Additionally, the success rate of net points and the break point conversion rate also have a strong correlation. Therefore, it is advised for players to maintain calm and fully utilize their technical abilities. The strong correlation coefficient of 0.814 for running distance in the last three points suggests that players should be proactive and minimize the possibility of being moved around by the opponent.
+\section{Testing Models}
+In section 3.2, we found that the server's win rate remains stable around $\frac{2}{3}$, while the loss rate remains stable around $\frac{1}{3}$. Therefore, here we will unify $P_{i1}$ as $\frac{2}{3}$ and $P_{i2}$ as $\frac{1}{3}$. In section 3.4, we calculated the optimal time decay factor $\alpha$ to be $0$. Hence, we can directly omit the time decay factor matrix $K$ here, and the adjusted weight matrix $W$ becomes $P^\mathbb{S}$. Equations 5 and 6 still apply in this context.The remaining content of this section is arranged as follows:
+In section 6.1 and 6.2, we will sequentially elaborate on the application of the M\&M model in the ATP Challenger Tour in 2022 and the BWF World Tour women's singles events. In section 6.3, we analyze the potential reasons for the decrease in accuracy and propose some factors that may be helpful for improving accuracy and generalization.
+\subsection{Testing Match 1: ATP Challenger Tour in 2022}
+We used the data from the 2022 ATP Challenger Tour men's singles (Below referred to as ``ATP'') to test the M\&M model. In the original model, the advantage matrix $\mathbf{A}$ was derived from the leading points. However, due to differences in the available data, we adjusted the leading points to the difference in serve success rate. Also, we change the prediction target to the specified player's win/loss in a match. 
+Most if the obtained values of $r$ were above $0.95$ , still demonstrating a high level of accuracy and generalization. This indicates that our model is applicable to similar types of matches.
+As shown in the Figure 17 below, the momentum of both players continues to adhere to the law of conservation of momentum in any match.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=14cm]{D:/数学建模资料/临时文件夹/图片/atp.png}
+	\caption{ATP Momentum} \label{fig:aa}
+\end{figure}
+\subsection{Testing Match 2: BWF World Tour Women's Singles Events}
+We used the data from the BWF World Tour women's singles events(Below referred to as "BWF") to test the M\&M model. Similar to the situation in section 6.1, we adjusted the leading points to the difference in game points and defined the same prediction target. 
+We have observed that as more data about the players is included, $r$ increases to around $0.8$. However, as the amount of data decreases, the correlation coefficient drops to a range of $0.5-0.6$, and the linear coefficient $b$ becomes unstable. This suggests that our model may not perform as well in other types of matches compared to matches of the same type.
+The Figure 18 displays the momentum of Tzu Ying Tai, the women's singles champion of the 2023 BWF World Tour Finals, along with her opponents. (player $\mathcal{A}$ is Tzu Ying Tai) The law of conservation of momentum still works. It is reasonable to expect an increased level of flow. Typically, in badminton matches, each player plays around 20 games per game, leading to a higher level of uncertainty.
+\begin{figure}[H]
+	\small
+	\centering
+	\includegraphics[width=14cm]{D:/数学建模资料/临时文件夹/图片/bwf.png}
+	\caption{BWF Momentum} \label{fig:aa}
+\end{figure}
+\subsection{Helpful Factor}
+Compared the application of ATP to BWF, the main difference lies in the definition of $\mathbf{A}$. The former is difference in serve success rate of a rally while the latter is the difference in game points. It is evident that the latter's ``game point'' does not directly related with the outcome of the match. We speculate that this is one of the significant reasons for the reduced accuracy. It suggests that we should choose  explicit factors. 
+
+Additionally, the characteristics of the sport and the rules of the game should also be taken into account. Take the two sports of tennis and badminton as an example. The distinct rules of these two sports place greater emphasis on different aspects of physical fitness. Tennis places a greater emphasis on endurance and explosive power, whereas badminton prioritizes agility and quick reaction abilities.
+\section{Sensitivity Analysis}
+We conducted tests on the sensitivity of the weight matrix $\mathbf{W}$ in our model across different matches. The specific approach involved assigning extreme values of $1$ and $0$, as well as a neutral value of $0.5$, to the corresponding weights of the server and returner. We evaluated the model's sensitivity to the weights based on the changes in accuracy $r$ and the coefficient $b$.
+When applied to the Wimbledon final, we found that the model exhibited higher sensitivity to the bias in weight represented by $b$, while being less sensitive to the bias in weight represented by $r$. 
+When applied to ATP matches, we observed that the model was more sensitive to an excessive bias towards the returner. 
+When applied to BWF matches, we found that the model exhibited lower sensitivity to the weights.
+
+\section{Strength and Weakness}
+\subsection{Strength}
+\begin{itemize}
+	\item The model has performed well in similar tennis matches, with an accuracy consistently above $0.95$. In different types of sports, such as badminton, the model's accuracy has also reached around $0.8$, indicating strong generalization capabilities.
+	\item The model utilizes the random forest method to select the most representative features for description. In the BP neural network module, it comprehensively analyzes the data and extracts 11 features that encompass both macro and micro aspects, as well as current and long-term factors. The process is conducted with rigor.
+\end{itemize}
+\subsection{Weakness}
+\begin{itemize}
+	\item Our model did not take into account factors such as the type of tennis court surface and the variety of grass used on the court. However, through literature review, we found that these factors can indeed have a significant impact on match outcomes.
+	\item Since the model quantifies based on individual performance, adjustments are needed for team sports such as basketball and football to incorporate team metrics.
+	\item Due to the M\&M model's reliance on the collective progress of the game to calculate probabilities, when describing momentum for different matches or variations in rules within the same match, it is necessary to redefine the probability matrix.
+\end{itemize}
+%\section{How to cite?}
+%bibliography cite use \cite{1,2,3}
+
+%AI cite use \AIcite{AI1,AI2,AI3}
+
+\begin{thebibliography}{99}
+\bibitem{1} \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5006010/}
+%D.~E. KNUTH   The \TeX{}book  the American Mathematical Society and Addison-Wesley Publishing Company , 1984-1986.
+\bibitem{2} N.A Rahman `` A Course in Theoretical Statistics'',
+Charles Griffin and Company, 1968.
+\bibitem{3} Allistair Higham ``Momentum, the Hidden Force in Tennis'',
+Duffield Printers,Leeds, 2000
+%\url{https://www.latexstudio.net/}
+\end{thebibliography}
+
+%\begin{appendices}
+%%%
+%\section{First appendix}
+%%%
+%In addition, your report must include a letter to the Chief Financial Officer (CFO) of the Goodgrant Foundation, Mr. Alpha Chiang, that describes the optimal investment strategy, your modeling approach and major results, and a brief discussion of your proposed concept of a return-on-investment (ROI). This letter should be no more than two pages in length.
+%
+%\begin{letter}{Dear, Mr. Alpha Chiang}
+%
+%\lipsum[1-2]
+%
+%\vspace{\parskip}
+%
+%Sincerely yours,
+%
+%Your friends
+%
+%\end{letter}
+%Here are simulation programmes we used in our model as follow.\\
+%
+%\textbf{\textcolor[rgb]{0.98,0.00,0.00}{Input matlab source:}}
+%\lstinputlisting[language=Matlab]{./code/mcmthesis-matlab1.m}
+%
+%\section{Second appendix}
+%
+%some more text \textcolor[rgb]{0.98,0.00,0.00}{\textbf{Input C++ source:}}
+%\lstinputlisting[language=C++]{./code/mcmthesis-sudoku.cpp}
+%
+%\end{appendices}
+
+
+\AImatter
+
+%\begin{ReportAiUse}{9}
+%\bibitem{AI1}
+%Bing AI\\
+%Query1: write a sort algorithm\\
+%Output: Sure, I can help you with that. Here is a simple implementation of the selection sort algorithm in Python:
+%\begin{lstlisting}[language=python]
+%def selection_sort(arr):
+%   for i in range(len(arr)):
+%        min_idx = i
+%        for j in range(i + 1, len(arr)):
+%            if arr[min_idx] > arr[j]:
+%                min_idx = j
+%        arr[i], arr[min_idx] = arr[min_idx], arr[i]
+%    return arr
+%\end{lstlisting}
+%This algorithm sorts an array by repeatedly finding the minimum element from the unsorted part of the array and putting it at the beginning. \href{https://www.geeksforgeeks.org/sorting-algorithms/}{The time complexity of this algorithm is O($n^2$)}.
+%
+%There are many other sorting algorithms available such as bubble sort, insertion sort, merge sort, quick sort, heap sort, and more. Each of these algorithms has its own advantages and disadvantages. You can learn more about them on GeeksforGeeks and Programiz.
+%
+%I hope this helps!
+%
+%\bibitem{AI2}
+%OpenAl Enie (Nov 5, 2023 version, Ernie 4.0)\\
+%Query1: <insert the exact wording of any subsequent input into the Al tool>\\
+%Output: <insert the complete output from the second query>
+%
+%\bibitem{AI3}
+%Github CoPilot (Feb 3, 2024 version)\\
+%Query1: <insert the exact wording you input into the Al tool>\\
+%Output: <insert the complete output fron the Al tool>
+%
+%\bibitem{AI4}
+%Google Bard (Feb 2,2024 version)\\
+%Query: <insert the exact wording of your query>\\
+%Output: <irsert the complete output from the Al tool>
+%
+%\bibitem{AI5}
+%Bing AI\\
+%Query: write a FFT algorithm\\
+%Output: Sure, here is a Python implementation of the Fast Fourier Transform (FFT) algorithm:
+%\begin{lstlisting}[language=python]
+%import numpy as np
+%%%
+%%%def fft(x):
+%%%    n = len(x)
+%%%    if n == 1:
+%%%        return x
+%%%    even = fft(x[0::2])
+%%%    odd = fft(x[1::2])
+%%%    T = [np.exp(-2j * np.pi * k / n) * odd[k] for k in range(n // 2)]
+%%%    return [even[k] + T[k] for k in range(n // 2)] + [even[k] - T[k] for k in range(n // 2)]
+%\end{lstlisting}
+%The FFT is a widely used algorithm for computing the \textbf{Discrete Fourier Transform (DFT)} of a sequence. It reduces the number of computations needed from O(n$^2$) to O(n log n) 12. The basic idea of the FFT is to apply divide and conquer. We divide the coefficient vector of the polynomial into two vectors, recursively compute the DFT for each of them, and combine the results to compute the DFT of the complete polynomial 3.
+%
+%I hope this helps!
+%
+%\end{ReportAiUse}
+
+\end{document}
+%%% 
+%%% This work consists of these files mcmthesis.dtx,
+%%%                                   figures/ and
+%%%                                   code/,
+%%% and the derived files             mcmthesis.cls,
+%%%                                   mcmthesis-demo.tex,
+%%%                                   README,
+%%%                                   LICENSE,
+%%%                                   mcmthesis.pdf and
+%%%                                   mcmthesis-demo.pdf.
+%%%
+%%% End of file `mcmthesis-demo.tex'.
