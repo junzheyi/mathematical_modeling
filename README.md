@@ -9,4 +9,4 @@
 + [美赛历年真题](https://www.contest.comap.com/undergraduate/contests/mcm/previous-contests.php)
 ## Achievement
 > + **The Third Prize** in Mathematical modeling competition of HUST
-> + 
+> + **Honorable Mention** in MCM of 2024
