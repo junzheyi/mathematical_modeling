@@ -10,3 +10,8 @@
 ## Achievement
 > + **The Third Prize** in Mathematical modeling competition of HUST
 > + **Honorable Mention** in MCM of 2024
+## Instructions
+- [competition_paper](./competition_paper): Our team's papers in competitions.
+- [MCM_outstanding_paper](./MCM_outstanding_paper/): O-Prize papers in last decade. Used to learn.
+- [Paper-reading](./Paper-reading/): share members' learning results.
+- [tips](./tips/): some useful tips on how to make your paper perfect.
